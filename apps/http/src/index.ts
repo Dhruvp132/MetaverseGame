@@ -4,7 +4,14 @@ import {router} from "./routes/v1"
 const app = express();
 app.use(express.json());
 
+app.get("/", (req, res) => {
+    res.json({
+        message: "hi tehre "
+    })
+})
 
 app.use("/api/v1", router)
 
-app.listen(process.env.PORT || 3000)
+app.listen(process.env.PORT || 3000, () => {
+    console.log("Server started on port " + (process.env.PORT || 3000))
+})
