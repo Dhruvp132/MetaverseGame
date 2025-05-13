@@ -46,12 +46,8 @@ const Arena = () => {
     switch (message.type) {
       case 'space-joined':
         // Initialize current user position and other users
-        console.log("set")
-        console.log({
-            x: message.payload.spawn.x,
-            y: message.payload.spawn.y,
-            userId: message.payload.userId
-          })
+        console.log("Space joined", message.payload);
+        
         setCurrentUser({
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
@@ -60,35 +56,57 @@ const Arena = () => {
         
         // Initialize other users from the payload
         const userMap = new Map();
-        message.payload.users.forEach((user: any) => {
-          userMap.set(user.userId, user);
-        });
+        if (message.payload.users && Array.isArray(message.payload.users)) {
+          message.payload.users.forEach((user: any) => {
+            if (user && user.userId !== message.payload.userId) {
+              userMap.set(user.userId, {
+                x: user.x,
+                y: user.y,
+                userId: user.userId
+              });
+            }
+          });
+        }
         setUsers(userMap);
         break;
 
       case 'user-joined':
-        setUsers(prev => {
-          const newUsers = new Map(prev);
-          newUsers.set(message.payload.userId, {
-            x: message.payload.x,
-            y: message.payload.y,
-            userId: message.payload.userId
+        // Another user joined the space
+        console.log("User joined", message.payload);
+        if (message.payload.userId !== currentUser.userId) {
+          setUsers(prev => {
+            const newUsers = new Map(prev);
+            newUsers.set(message.payload.userId, {
+              x: message.payload.x,
+              y: message.payload.y,
+              userId: message.payload.userId
+            });
+            return newUsers;
           });
-          return newUsers;
-        });
+        }
         break;
 
       case 'movement':
-        setUsers(prev => {
-          const newUsers = new Map(prev);
-          const user = newUsers.get(message.payload.userId);
-          if (user) {
-            user.x = message.payload.x;
-            user.y = message.payload.y;
-            newUsers.set(message.payload.userId, user);
-          }
-          return newUsers;
-        });
+        // Another user moved
+        if (message.payload.userId !== currentUser.userId) {
+          setUsers(prev => {
+            const newUsers = new Map(prev);
+            const user = newUsers.get(message.payload.userId);
+            if (user) {
+              user.x = message.payload.x;
+              user.y = message.payload.y;
+              newUsers.set(message.payload.userId, user);
+            } else {
+              // If user doesn't exist in our map yet (rare edge case)
+              newUsers.set(message.payload.userId, {
+                x: message.payload.x,
+                y: message.payload.y,
+                userId: message.payload.userId
+              });
+            }
+            return newUsers;
+          });
+        }
         break;
 
       case 'movement-rejected':
@@ -127,10 +145,8 @@ const Arena = () => {
 
   // Draw the arena
   useEffect(() => {
-    console.log("render")
     const canvas = canvasRef.current;
     if (!canvas) return;
-    console.log("below render")
     
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -150,14 +166,10 @@ const Arena = () => {
       ctx.stroke();
     }
 
-    console.log("before curerntusert")
-    console.log(currentUser)
     // Draw current user
-    if (currentUser && currentUser.x) {
-        console.log("drawing myself")
-        console.log(currentUser)
+    if (currentUser && currentUser.x !== undefined && currentUser.y !== undefined) {
       ctx.beginPath();
-      ctx.fillStyle = '#FF6B6B';
+      ctx.fillStyle = '#FF6B6B'; // Red for current user
       ctx.arc(currentUser.x * 50, currentUser.y * 50, 20, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#000';
@@ -168,19 +180,16 @@ const Arena = () => {
 
     // Draw other users
     users.forEach(user => {
-    if (!user.x) {
-        return
-    }
-    console.log("drawing other user")
-    console.log(user)
-      ctx.beginPath();
-      ctx.fillStyle = '#4ECDC4';
-      ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
+      if (user && user.x !== undefined && user.y !== undefined) {
+        ctx.beginPath();
+        ctx.fillStyle = '#4ECDC4'; // Blue for other users
+        ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
+      }
     });
   }, [currentUser, users]);
 
