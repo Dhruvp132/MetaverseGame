@@ -62,15 +62,19 @@ export class User {
                     this.spaceId = spaceId
                     RoomManager.getInstance().addUser(spaceId, this);
                     this.x = Math.floor(Math.random() * space?.width);
-                    this.y = Math.floor(Math.random() * space?.height);
-                    this.send({
+                    this.y = Math.floor(Math.random() * space?.height);                    this.send({
                         type: "space-joined",
                         payload: {
                             spawn: {
                                 x: this.x,
                                 y: this.y
                             },
-                            users: RoomManager.getInstance().rooms.get(spaceId)?.filter(x => x.id !== this.id)?.map((u) => ({id: u.id})) ?? []
+                            userId: this.userId,
+                            users: RoomManager.getInstance().rooms.get(spaceId)?.filter(x => x.id !== this.id)?.map((u) => ({
+                                userId: u.userId,
+                                x: u.x,
+                                y: u.y
+                            })) ?? []
                         }
                     });
                     console.log("jouin receiverdf5")
@@ -90,12 +94,12 @@ export class User {
                     const yDisplacement = Math.abs(this.y - moveY);
                     if ((xDisplacement == 1 && yDisplacement== 0) || (xDisplacement == 0 && yDisplacement == 1)) {
                         this.x = moveX;
-                        this.y = moveY;
-                        RoomManager.getInstance().broadcast({
+                        this.y = moveY;                        RoomManager.getInstance().broadcast({
                             type: "movement",
                             payload: {
                                 x: this.x,
-                                y: this.y
+                                y: this.y,
+                                userId: this.userId
                             }
                         }, this, this.spaceId!);
                         return;
