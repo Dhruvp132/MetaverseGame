@@ -1,3 +1,5 @@
+/* eslint-disable no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 
 const Arena = () => {
@@ -11,7 +13,6 @@ const Arena = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token') || '';
-    console.log(token)
     const spaceId = urlParams.get('spaceId') || '';
     setParams({ token, spaceId });
 

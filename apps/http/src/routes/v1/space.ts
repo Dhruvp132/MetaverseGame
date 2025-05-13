@@ -126,7 +126,7 @@ spaceRouter.delete("/:spaceId", userMiddleware, async(req, res) => {
     res.json({message: "Space deleted"})
 })
 
-spaceRouter.get("/all", userMiddleware, async (req, res) => {
+spaceRouter.get("/all", async (req, res) => {
     const spaces = await client.space.findMany({
         where: {
             creatorId: req.userId!
